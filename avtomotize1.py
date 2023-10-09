@@ -5,6 +5,13 @@ import psycopg2  # Import the library for working with PostgreSQL
 from docx.shared import Pt
 from docx.oxml.ns import nsdecls
 from docx.oxml import parse_xml
+from docx.enum.table import WD_ALIGN_VERTICAL
+from docx.shared import Pt, RGBColor, Inches
+from docx.oxml.ns import nsdecls
+from docx.oxml.ns import nsdecls
+from docx.oxml import parse_xml
+from docx.oxml.shared import OxmlElement
+from docx.oxml.ns import qn
 # Set up a connection to the PostgreSQL database
 conn = psycopg2.connect(
     dbname="gdp_test",
@@ -15,11 +22,26 @@ conn = psycopg2.connect(
 )
 
 # Path to the directory where Excel files are stored
-tables_directory = "./tables/"
+tables_directory = "./tables_test/"
 
 # Path to the output document
-output_document_path = "./word/test.docx"
+output_document_path = "./word/test1.docx"
+def set_cell_margins(cell, **kwargs):
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    tcMar = OxmlElement('w:tcMar')
 
+    for m in ["top", "start", "bottom", "end"]:
+        if m in kwargs:
+            node = OxmlElement("w:{}".format(m))
+            node.set(qn('w:w'), str(kwargs.get(m)))
+            node.set(qn('w:type'), 'dxa')
+            tcMar.append(node)
+
+    tcPr.append(tcMar)
+def hex_to_rgb(hex_color):
+    hex_color = hex_color.lstrip("#")
+    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 # Create a new Word document
 new_document = Document()
 
@@ -57,24 +79,28 @@ for topic in topics:
                 # Load the Excel file
                 excel_workbook = load_workbook(excel_file_path, data_only=True)
                 excel_sheet = excel_workbook.active
-
                 # Check if the Excel table is not empty
                 if excel_sheet.max_row > 0 and excel_sheet.max_column > 0:
                     # Create a new table in the Word document
                     num_rows = excel_sheet.max_row
                     num_cols = excel_sheet.max_column
                     table = new_document.add_table(rows=num_rows, cols=num_cols)
-                    
+                    table.style = 'Table Grid'
                     # Apply cell formatting and add borders to paragraphs (use your provided code)
                     for row in table.rows:
                         for cell in row.cells:
-                            cell.paragraphs[0].style.font.size = Pt(8)
+                            cell.paragraphs[0].style.font.size = Pt(10)
                             for paragraph in cell.paragraphs:
                                 for run in paragraph.runs:
                                     run.font.size = Pt(8)
-                            header_shading_elm = parse_xml(r'<w:shd {} w:fill="006FC0"/>'.format(nsdecls('w')))
-                            cell._tc.get_or_add_tcPr().append(header_shading_elm)
-                    
+                                    
+                            shading_elm = parse_xml(r'<w:shd {} w:fill="ADD8E6"/>'.format(nsdecls('w')))
+                            cell._tc.get_or_add_tcPr().append(shading_elm)
+
+                            
+                            # Add cell borders using the cell.borders property
+                            
+
                     # Fill the table with data from Excel
                     for row_idx, row in enumerate(excel_sheet.iter_rows()):
                         for col_idx, cell in enumerate(row):
