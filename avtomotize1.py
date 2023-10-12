@@ -8,6 +8,8 @@ from docx.oxml import parse_xml
 from docx.oxml.shared import OxmlElement
 from docx.shared import RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from docx.enum.table import WD_ALIGN_VERTICAL
+from docx.shared import Inches
 
 def hex_to_rgb(hex_color):
     hex_color = hex_color.lstrip("#")
@@ -17,6 +19,9 @@ def set_text_color_to_white(cell):
     for paragraph in cell.paragraphs:
         for run in paragraph.runs:
             run.font.color.rgb = RGBColor(255, 255, 255)
+
+def set_table_width_to_page_width(table, page_width):
+    table.width = page_width
 
 def process_table(new_document, table_name, tables_directory):
     excel_file_path = os.path.join(tables_directory, f"{table_name}.xlsx")
@@ -42,14 +47,16 @@ def process_table(new_document, table_name, tables_directory):
             for row_idx, row in enumerate(excel_sheet.iter_rows()):
                 for col_idx, cell in enumerate(row):
                     cell_value = cell.value if cell.value is not None else ""
-                    table.cell(row_idx, col_idx).text = str(cell_value)
+                    cell = table.cell(row_idx, col_idx)
+                    cell.text = str(cell_value)
+                    cell.paragraphs[0].alignment = WD_ALIGN_VERTICAL.CENTER
+                    cell.width = Inches(1)  # Fixed width
+                    cell.autofit = True  # Autofit the cell to its content
                     if row_idx == 0:
-            # Set text color to white for the first row
                         for paragraph in table.rows[row_idx].cells[col_idx].paragraphs:
                             if paragraph.runs:
                                 for run in paragraph.runs:
                                     run.font.color.rgb = RGBColor(255, 255, 255)
-
             new_document.add_paragraph()
         else:
             new_document.add_paragraph("Empty table: " + table_name)
@@ -97,6 +104,7 @@ def main():
         topic_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
         topic_font.bold = True
         new_document.add_paragraph()
+
         cursor.execute("SELECT * FROM api_economic_index WHERE macro_topic_id = %s", (topic_id,))
         economic_indexes = cursor.fetchall()
 
@@ -115,6 +123,7 @@ def main():
             table_names = cursor.fetchall()
 
             for table_name in table_names:
+                set_table_width_to_page_width(new_document.add_table(rows=1, cols=1), Inches(8.5))  # Set table width
                 process_table(new_document, table_name[0], tables_directory)
 
     new_document.save("./word/test1.docx")
