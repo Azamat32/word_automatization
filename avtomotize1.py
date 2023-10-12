@@ -7,6 +7,7 @@ from docx.oxml.ns import nsdecls
 from docx.oxml import parse_xml
 from docx.oxml.shared import OxmlElement
 from docx.shared import RGBColor
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
 def hex_to_rgb(hex_color):
     hex_color = hex_color.lstrip("#")
@@ -85,16 +86,30 @@ def main():
     cursor.execute("SELECT * FROM api_topic")
     topics = cursor.fetchall()
 
-    for topic in topics:
+    for i, topic in enumerate(topics):
         topic_id, topic_name = topic
-        new_document.add_heading(topic_name, level=1)
-
+        topic_heading = f"{i + 1}. {topic_name}"
+        topic_paragraph = new_document.add_paragraph()
+        topic_run = topic_paragraph.add_run(topic_heading)
+        topic_font = topic_run.font
+        topic_font.name = 'Arial'
+        topic_font.size = Pt(16)
+        topic_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        topic_font.bold = True
+        new_document.add_paragraph()
         cursor.execute("SELECT * FROM api_economic_index WHERE macro_topic_id = %s", (topic_id,))
         economic_indexes = cursor.fetchall()
 
-        for economic_index in economic_indexes:
+        for k, economic_index in enumerate(economic_indexes):
             economic_index_id, economic_index_name, *some = economic_index
-            new_document.add_heading(economic_index_name, level=2)
+            economic_index_heading = f"{i + 1}.{k+1}.  {economic_index_name}"
+            economic_index_paragraph = new_document.add_paragraph()
+            economic_index_run = economic_index_paragraph.add_run(economic_index_heading)
+            economic_index_font = economic_index_run.font
+            economic_index_font.name = 'Arial'
+            economic_index_font.size = Pt(12)
+            economic_index_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+            economic_index_font.color.rgb = RGBColor(0, 0, 139)
 
             cursor.execute("SELECT path FROM api_table WHERE macro_economic_index_id = %s", (economic_index_id,))
             table_names = cursor.fetchall()
