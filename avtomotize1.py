@@ -70,7 +70,7 @@ def main():
     )
 
     # Path to the directory where Excel files are stored
-    tables_directory = "./tables/"
+    tables_directory = "./tables_test/"
 
     # Path to the output document
     output_document_path = "./word/BulletTestTemplate.docx"
