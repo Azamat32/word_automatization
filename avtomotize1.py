@@ -165,7 +165,7 @@ def process_table(new_document, table_name, tables_directory , topic_color , cel
         print(f"Error processing table {table_name}: {str(e)}")
 
 def main():
-# Check if the JSON config file exists
+# Check if the JSON config file existss
     conn = None
     if os.path.exists(config_path):
         with open(config_path, 'r') as config_file:
